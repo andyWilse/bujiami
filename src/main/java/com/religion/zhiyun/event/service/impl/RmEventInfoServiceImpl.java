@@ -7,8 +7,8 @@ import com.religion.zhiyun.event.entity.EventEntity;
 import com.religion.zhiyun.event.entity.EventReportMenEntity;
 import com.religion.zhiyun.event.entity.NotifiedEntity;
 import com.religion.zhiyun.event.service.RmEventInfoService;
+import com.religion.zhiyun.interfaces.entity.huawei.FeeInfo;
 import com.religion.zhiyun.interfaces.service.AiEventService;
-import com.religion.zhiyun.login.entity.LoginInfo;
 import com.religion.zhiyun.monitor.dao.MonitorBaseMapper;
 import com.religion.zhiyun.monitor.dao.MonitorSmokerMapper;
 import com.religion.zhiyun.monitor.dao.RmMonitroInfoMapper;
@@ -27,13 +27,15 @@ import com.religion.zhiyun.user.entity.SysUserEntity;
 import com.religion.zhiyun.utils.JsonUtils;
 import com.religion.zhiyun.utils.Tool.GeneTool;
 import com.religion.zhiyun.utils.Tool.TimeTool;
+import com.religion.zhiyun.utils.enums.CallEnums;
 import com.religion.zhiyun.utils.enums.RoleEnums;
 import com.religion.zhiyun.utils.response.AppResponse;
 import com.religion.zhiyun.utils.response.OutInterfaceResponse;
 import com.religion.zhiyun.utils.response.PageResponse;
 import com.religion.zhiyun.utils.response.RespPageBean;
 import com.religion.zhiyun.utils.enums.ParamCode;
-import com.religion.zhiyun.utils.sms.SendMassage;
+import com.religion.zhiyun.utils.sms.call.VoiceCall;
+import com.religion.zhiyun.utils.sms.sm.MessageSend;
 import com.religion.zhiyun.venues.dao.RmVenuesInfoMapper;
 import com.religion.zhiyun.venues.entity.ParamsVo;
 import com.religion.zhiyun.venues.entity.VenuesEntity;
@@ -191,7 +193,7 @@ public class RmEventInfoServiceImpl implements RmEventInfoService {
                 venuesAddres = venues.getVenuesAddres();
                 venuesName = venues.getVenuesName();
             }
-            String contents="【瓯海宗教智治】您好！位于"+venuesAddres+"的"+venuesName+",触发“"+cont+"”预警，请您立刻前去处理！！";
+            String contents="【智云科技】您好！位于"+venuesAddres+"的"+venuesName+",触发“"+cont+"”预警，请您立刻前去处理！！";
             HashMap<String,Object> mapCall=new HashMap<>();
             mapCall.put("eventType",eventType);
             mapCall.put("relVenuesId",relVenuesId);
@@ -684,7 +686,7 @@ public class RmEventInfoServiceImpl implements RmEventInfoService {
                     venuesAddres = venues.getVenuesAddres();
                     venuesName = venues.getVenuesName();
                 }
-                String contents="【瓯海宗教智治】您好！位于"+venuesAddres+"的"+venuesName+",触发“烟感”预警，请您立刻前去处理！！";
+                String contents="【智云科技】您好！位于"+venuesAddres+"的"+venuesName+",触发“烟感”预警，请您立刻前去处理！！";
                 HashMap<String,Object> mapCall=new HashMap<>();
                 mapCall.put("eventType",ParamCode.EVENT_TYPE_01.getCode());
                 mapCall.put("relVenuesId",relVenuesId);
@@ -1158,24 +1160,6 @@ public class RmEventInfoServiceImpl implements RmEventInfoService {
                 String userMobile = (String) map.get("userMobile");
                 userNextList.add(userMobile);//下节点流程处理人员
                 user=user+userMobile+",";//通知人员
-                //查询开关，通知
-                String openFlag=sysBaseMapper.getOpenState(SysBaseEnum.SEND_MESSAGE_SWITCH.getCode());
-                if("1".equals(openFlag)){//1-开；0-关 （短信开关）
-                   //3.1.1.电话通知
-                    if(tmFlag && ParamCode.EVENT_TYPE_01.getCode().equals(eventType)){
-                        mapCall.put("phone",userMobile);
-                        /*String sessionId = VoiceCall.voiceCall(mapCall);
-                        //保存数据
-                        FeeInfo feeInfo =new FeeInfo();
-                        feeInfo.setSessionId(sessionId);
-                        feeInfo.setEventType(CallEnums.fee.getCode());
-                        feeInfo.setRefEventId(String.valueOf(relEventId));
-                        eventNotifiedMapper.addCall(feeInfo);*/
-
-                    }
-                    //3.1.2.短信通知
-                    SendMassage.sendSms(contents, userMobile);
-                }
             }
             notifiedEntity.setNotifiedUser(user);
             System.out.println(contents+":共发送"+(userList.size())+"条短信");
@@ -1195,28 +1179,31 @@ public class RmEventInfoServiceImpl implements RmEventInfoService {
                 for(int i=0;i<split.length;i++){
                     String managerMobile = split[i];
                     userNextList.add(managerMobile);//下节点流程处理人员
-                    //短信开关
-                    String openFlag=sysBaseMapper.getOpenState(SysBaseEnum.SEND_MESSAGE_SWITCH.getCode());
-                    if("1".equals(openFlag)){//1-开；0-关
-                        //3.2.1.电话通知
-                        if(tmFlag){
-                            mapCall.put("phone",managerMobile);
-                            /*String sessionId = VoiceCall.voiceCall(mapCall);
-                            //保存数据
-                            FeeInfo feeInfo =new FeeInfo();
-                            feeInfo.setSessionId(sessionId);
-                            feeInfo.setEventType(CallEnums.fee.getCode());
-                            feeInfo.setRefEventId(String.valueOf(relEventId));
-                            eventNotifiedMapper.addCall(feeInfo);*/
-                        }
-                        //3.2.2.短信通知
-                        SendMassage.sendSms(contents, managerMobile);
-                    }
                 }
                 System.out.println(contents+":共发送"+(split.length)+"条短信");
             }else{
                 throw new RuntimeException("该场所内尚未添加职员信息！");
             }
+        }
+
+        //查询开关，通知
+        String openFlag=sysBaseMapper.getOpenState(SysBaseEnum.SEND_MESSAGE_SWITCH.getCode());
+        if("1".equals(openFlag)){//1-开；0-关 （短信开关）
+            //3.1.1.电话通知
+            if(tmFlag && ParamCode.EVENT_TYPE_01.getCode().equals(eventType)){
+                mapCall.put("phone",user+","+manager);
+                        String sessionId = VoiceCall.voiceCall(mapCall);
+                        //保存数据
+                        FeeInfo feeInfo =new FeeInfo();
+                        feeInfo.setSessionId(sessionId);
+                        feeInfo.setEventType(CallEnums.fee.getCode());
+                        feeInfo.setRefEventId(String.valueOf(relEventId));
+                        eventNotifiedMapper.addCall(feeInfo);
+
+            }
+            //3.1.2.短信通知
+            //SendMassage.sendSms(contents, userMobile);
+            MessageSend.sendSmsMass(contents,userNextList);
         }
 
         /*** 4.保存通知 ***/
