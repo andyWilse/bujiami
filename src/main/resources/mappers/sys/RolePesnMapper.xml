@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.religion.zhiyun.sys.menus.dao.RolePesnMapper">
+
+    <insert id="add" parameterType="string">
+        INSERT INTO
+            RM_SYS_ROLE_PESN
+            (PMSN_CD,ROLE_ID,VALID_IND)
+            values(#{pmsnCd},#{roleId},'1')
+    </insert>
+
+    <select id="getMenuByRole" resultType="String">
+        select
+            PMSN_CD
+        from RM_SYS_ROLE_PESN
+        where 1=1
+        <if test="roleId != null and roleId != ''">
+            AND  ROLE_ID = #{roleId}
+        </if>
+    </select>
+
+    <delete id="delete" flushCache="true">
+        delete from RM_SYS_ROLE_PESN where ROLE_ID =#{roleId}
+    </delete>
+
+    <delete id="deleteUserGrand" flushCache="true">
+        delete from RM_SYS_USER_POST_REL where USER_ID =#{userId}
+    </delete>
+
+    <insert id="addUserGrand" parameterType="string">
+        INSERT INTO RM_SYS_USER_POST_REL (USER_ID,POST_CD) values(#{userId},#{postCd})
+    </insert>
+
+    <select id="getMenuByUser" resultType="String">
+        select
+            distinct me.menu
+        from (
+            (select
+                POST_CD as menu,USER_ID as userId
+            from RM_SYS_USER_POST_REL)
+            UNION ALL
+            (select
+                pe.PMSN_CD as menu,rel.USER_ID as userId
+            from RM_SYS_ROLE_PESN pe
+            left join rm_sys_user_role_rel rel on rel.ROLE_ID=pe.ROLE_ID)
+        ) me
+        where 1=1
+        <if test="userId != null and userId != ''">
+            AND  me.userId = #{userId}
+        </if>
+    </select>
+
+</mapper>

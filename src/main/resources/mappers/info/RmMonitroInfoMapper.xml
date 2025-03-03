@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.religion.zhiyun.monitor.dao.RmMonitroInfoMapper">
+    <sql id="monitroColumn">
+        MONITOR_ID as monitorId,
+        ACCESS_NUMBER as accessNumber,
+        r.MONITOR_URL as monitorUrl,
+        CASE STATE WHEN '01' THEN '在线'  ELSE '报修' END as state,
+        FUNCTION_TYPE as functionType,
+        REL_VENUES_ID as relVenuesId,
+        CREATOR as creator,
+        CREATE_TIME as createTime,
+        LAST_MODIFIER as lastModifier,
+        LAST_MODIFY_TIME as lastModifyTime
+    </sql>
+
+    <insert id="addMonitro" >
+        insert into rm_monitor_manage_info
+        (
+        ACCESS_NUMBER,
+        MONITOR_URL,
+        STATE,
+        FUNCTION_TYPE,
+        REL_VENUES_ID,
+        CREATOR,
+        CREATE_TIME,
+        LAST_MODIFIER,
+        LAST_MODIFY_TIME
+        )
+        values(
+        #{accessNumber},
+        #{monitorUrl},
+        #{state},
+        #{functionType},
+        #{relVenuesId},
+        #{creator},
+        #{createTime},
+        #{lastModifier},
+        #{lastModifyTime}
+        )
+    </insert>
+
+    <update id="updateMonitro">
+        update rm_monitor_manage_info
+        set STATE=#{state},
+            FUNCTION_TYPE=#{functionType},
+            REL_VENUES_ID=#{relVenuesId},
+            LAST_MODIFIER=#{lastModifier},
+            LAST_MODIFY_TIME= #{lastModifyTime}
+        where MONITOR_ID=#{monitorId}
+    </update>
+
+    <delete id="deleteMonitro">
+        delete from rm_monitor_manage_info
+        where MONITOR_ID=#{monitorId}
+    </delete>
+    <select id="allMonitro" resultType="com.religion.zhiyun.monitor.entity.MonitorEntity">
+        select
+        <include refid="monitroColumn"/>
+        from rm_monitor_manage_info
+    </select>
+
+    <select id="getAllNum" resultType="java.util.Map">
+        SELECT  COUNT(MONITOR_ID) AS total,
+                SUM(CASE WHEN STATE =01 THEN 1 ELSE 0 END) AS onLine,
+                SUM(CASE WHEN STATE =02 THEN 1 ELSE 0 END) AS repair
+        FROM rm_monitor_manage_info mo
+        left join rm_venues_info ve on ve.VENUES_ID=mo.REL_VENUES_ID
+        where ve.VENUES_STATUS='01'
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getMonitorByState" resultType="com.religion.zhiyun.monitor.entity.MonitorEntity">
+        select <include refid="monitroColumn"/> from rm_monitor_manage_info
+        where state=#{state}
+        ORDER BY MONITOR_ID DESC
+    </select>
+    <select id="getMonitorByVenuesId" resultType="com.religion.zhiyun.monitor.entity.MonitorEntity">
+        SELECT <include refid="monitroColumn"/>FROM rm_monitor_manage_info
+        INNER JOIN rm_venues_info ON rm_venues_info.VENUES_ID=rm_monitor_manage_info.REL_VENUES_ID
+        WHERE state=#{state}
+    </select>
+
+    <select id="getTotal" resultType="java.lang.Long">
+        select count(r.MONITOR_ID)
+        from RM_MONITOR_MANAGE_INFO r
+        left join RM_VENUES_INFO ve on r.REL_VENUES_ID=ve.VENUES_ID
+        where 1=1
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  r.ACCESS_NUMBER LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getMonitorByPage" resultType="com.religion.zhiyun.monitor.entity.MonitorEntity">
+        select
+            MONITOR_ID as monitorId,
+            ACCESS_NUMBER as accessNumber,
+            MONITOR_URL as monitorUrl,
+            CASE STATE WHEN '01' THEN '在线'  ELSE '报修' END as state,
+            FUNCTION_TYPE as functionType,
+            ve.VENUES_NAME as venuesAddres,
+            r.CREATOR as creator,
+            r.CREATE_TIME as createTime,
+            r.LAST_MODIFIER as lastModifier,
+            r.LAST_MODIFY_TIME as lastModifyTime
+        from RM_MONITOR_MANAGE_INFO r
+        left join RM_VENUES_INFO ve on r.REL_VENUES_ID=ve.VENUES_ID
+        where 1=1
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  r.ACCESS_NUMBER LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        order by r.LAST_MODIFY_TIME desc
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="getMonitorURLByAccessNum" resultType="java.lang.String">
+        SELECT monitor_url FROM rm_monitor_manage_info
+        WHERE access_number=#{accessNumber}
+    </select>
+
+    <select id="getVenuesMonitor" resultType="map">
+        select
+            ve.VENUES_ID as venuesId,
+            ve.VENUES_NAME as venuesName,
+            ve.VENUES_ADDRES as venuesAddres,
+            ve.ORGANIZATION as organization,
+            ve.REGISTER_NBR as registerNbr,
+            res.MANAGER_CN_NM  as responsiblePerson,
+            res.MANAGER_MOBILE as responsibleMobile,
+            gr.MANAGER_CN_NM  as members,
+            gr.MANAGER_MOBILE as membersMobile,
+            lia.MANAGER_CN_NM  as liaisonMan,
+            lia.MANAGER_MOBILE as liaisonManMobile,
+            (SELECT GROUP_CONCAT(ACCESS_NUMBER) FROM rm_monitor_manage_info mo where mo.REL_VENUES_ID=ve.VENUES_ID ) as monitors
+        from RM_VENUES_INFO ve
+        left join rm_venues_manager_info res on ve.RESPONSIBLE_PERSON=res.MANAGER_ID and res.MANAGER_TYPE_CD='01'
+        left join rm_venues_manager_info gr on ve.GROUP_MEMBERS=gr.MANAGER_ID and gr.MANAGER_TYPE_CD='02'
+        left join rm_venues_manager_info lia on ve.LIAISON_MAN=lia.MANAGER_ID and lia.MANAGER_TYPE_CD='03'
+        where VENUES_STATUS!='02'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  ve.VENUES_NAME LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        order by ve.VENUES_ID desc
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="getVenuesMonitorTotal" resultType="java.lang.Long">
+        select
+            count(ve.VENUES_ID)
+        from RM_VENUES_INFO ve
+        where VENUES_STATUS!='02'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  ve.VENUES_NAME LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getMonitors" resultType="map">
+        select
+            ve.VENUES_ID as VenuesId,
+            m.TASK_ID as taskId,
+            m.ACCESS_NUMBER  as accessNumber,
+            ve.VENUES_NAME as venuesName,
+            ve.VENUES_ADDRES as venuesAddres,
+            m.CREATE_TIME as time
+        from rm_monitor_manage_info m
+        left join  RM_VENUES_INFO ve on ve.VENUES_ID=m.rel_venues_id
+        where VENUES_STATUS!='02'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND ( m.ACCESS_NUMBER LIKE CONCAT('%',#{vo.searchOne},'%')
+            or  ve.VENUES_NAME LIKE CONCAT('%',#{vo.searchOne},'%'))
+        </if>
+        <if test="vo.searchTwo != null and vo.searchTwo != ''">
+            AND  m.STATE =#{vo.searchTwo}
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        order by m.LAST_MODIFY_TIME
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="getMonitorsTotal" resultType="java.lang.Long">
+        select
+            count(m.MONITOR_ID)
+        from rm_monitor_manage_info m
+        left join  RM_VENUES_INFO ve on ve.VENUES_ID=m.rel_venues_id
+        where VENUES_STATUS!='02'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND ( m.ACCESS_NUMBER LIKE CONCAT('%',#{vo.searchOne},'%')
+            or  ve.VENUES_NAME LIKE CONCAT('%',#{vo.searchOne},'%'))
+        </if>
+        <if test="vo.searchTwo != null and vo.searchTwo != ''">
+            AND  m.STATE =#{vo.searchTwo}
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getMoDetail" resultType="map">
+        select
+            ve.VENUES_ID as venuesId,
+            ve.VENUES_NAME as venuesName,
+            ve.VENUES_ADDRES as venuesAddres,
+            ve.ORGANIZATION as organization,
+            ve.REGISTER_NBR as registerNbr,
+            ve.VENUES_PHONE as venuesPhone,
+            res.MANAGER_CN_NM  as responsiblePerson,
+            res.MANAGER_MOBILE as responsibleMobile,
+            gr.MANAGER_CN_NM  as members,
+            gr.MANAGER_MOBILE as membersMobile,
+            lia.MANAGER_CN_NM  as liaisonMan,
+            lia.MANAGER_MOBILE as liaisonManMobile,
+            m.ACCESS_NUMBER  as accessNumber,
+            m.MONITOR_URL as monitorUrl,
+            m.STATE as monitorStatus,
+            (SELECT GROUP_CONCAT(ACCESS_NUMBER) FROM rm_monitor_manage_info mo where mo.REL_VENUES_ID=m.REL_VENUES_ID ) as monitors
+        from rm_monitor_manage_info m
+        left join  RM_VENUES_INFO ve on ve.VENUES_ID=m.rel_venues_id
+        left join rm_venues_manager_info res on ve.RESPONSIBLE_PERSON=res.MANAGER_ID and res.MANAGER_TYPE_CD='01'
+        left join rm_venues_manager_info gr on ve.GROUP_MEMBERS=gr.MANAGER_ID and gr.MANAGER_TYPE_CD='02'
+        left join rm_venues_manager_info lia on ve.LIAISON_MAN=lia.MANAGER_ID and lia.MANAGER_TYPE_CD='03'
+        where 1=1
+        <if test="accessNumber != null and accessNumber != ''">
+            AND  m.ACCESS_NUMBER =#{accessNumber}
+        </if>
+        <if test="venuesId != null and venuesId != ''">
+            AND  ve.VENUES_ID =#{venuesId}
+        </if>
+    </select>
+
+    <select id="getMonitInfo" resultType="map">
+        select
+        distinct
+            m.ACCESS_NUMBER  as accessNumber,
+            m.MONITOR_URL as monitorUrl,
+            m.STATE as status,
+            case m.STATE
+            when '01' then '完好'
+            when '02' then '损坏'
+            else m.STATE
+            end as statusCn
+        from rm_monitor_manage_info m
+        left join rm_monitor_manage_info mo on mo.rel_venues_id =m.rel_venues_id
+        left join  RM_VENUES_INFO ve on ve.VENUES_ID=m.rel_venues_id
+        where 1=1
+        <if test="accessNumber != null and accessNumber != ''">
+            AND  mo.ACCESS_NUMBER =#{accessNumber}
+        </if>
+        <if test="venuesId != null and venuesId != ''">
+            AND  ve.VENUES_ID =#{venuesId}
+        </if>
+    </select>
+
+
+    <select id="getMonitorsList" resultType="com.religion.zhiyun.monitor.entity.MonitorEntity">
+        SELECT
+            MONITOR_ID as monitorId,
+            ACCESS_NUMBER as accessNumber,
+            FUNCTION_TYPE as functionType,
+            REL_VENUES_ID as relVenuesId,
+            STATE,
+            MONITOR_URL as monitorUrl
+        FROM rm_monitor_manage_info m
+        WHERE 1=1
+        <if test="accessNumber != null and accessNumber != ''">
+            AND  m.ACCESS_NUMBER =#{accessNumber}
+        </if>
+    </select>
+
+    <select id="getMonitorInstList" resultType="com.religion.zhiyun.monitor.entity.MonitorEntity">
+        SELECT distinct
+            mo.MONITOR_ID as monitorId,
+            mo.ACCESS_NUMBER as accessNumber,
+            mo.FUNCTION_TYPE as functionType,
+            mo.REL_VENUES_ID as relVenuesId,
+            mo.STATE,
+            mo.MONITOR_URL as monitorUrl
+        from rm_task_info ta
+        left join rm_event_info ev on ta.REL_EVENT_ID=ev.EVENT_ID
+        left join rm_monitor_manage_info mo on ev.ACCESS_NUMBER=mo.ACCESS_NUMBER
+        where 1=1
+        <if test="procInstId != null and procInstId != ''">
+            AND  ta.PROC_INST_ID =#{procInstId}
+        </if>
+    </select>
+
+
+    <select id="getMonitUrl" resultType="map">
+        select
+            m.MONITOR_URL as monitorUrl
+        from rm_monitor_manage_info m
+        left join  RM_VENUES_INFO ve on ve.VENUES_ID=m.rel_venues_id
+        where m.STATE='01'
+        <if test="venuesName != null and venuesName != ''">
+            AND  ve.VENUES_NAME LIKE concat('%',#{venuesName},'%')
+        </if>
+    </select>
+
+
+</mapper>

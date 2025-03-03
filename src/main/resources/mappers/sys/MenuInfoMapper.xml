@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.religion.zhiyun.sys.menus.dao.MenuInfoMapper">
+    <sql id="menuColumn">
+        MENU_ID as menuId ,
+        PMSN_CD as pmsnCd,
+        PARENT_ID as parentId,
+        MENU_PRT_IDS as menuPrtIds,
+        MENU_NM as menuNm,
+        SORT_LVL as sortLvl,
+        HREF as href,
+        ICON_NM as iconNm,
+        RESOURCE_TYPE as resourceType,
+        APP_CODE as appCode,
+        VALID_IND  as validInd
+
+    </sql>
+
+    <select id="findRoot" resultType="com.religion.zhiyun.sys.menus.entity.MenuEntity">
+        select
+        <include refid="menuColumn"/>
+        from RM_SYS_MENU_INFO
+        where RESOURCE_TYPE is not null
+        and VALID_IND='1'
+    </select>
+
+    <select id="findMenus" resultType="com.religion.zhiyun.sys.menus.entity.MenuEntity">
+        select
+        <include refid="menuColumn"/>
+        from RM_SYS_MENU_INFO
+        where VALID_IND='1'
+        <if test="_parameter != null and _parameter != ''">
+            and RESOURCE_TYPE = #{resourceType}
+        </if>
+    </select>
+
+    <select id="findAllChilds" resultType="com.religion.zhiyun.sys.menus.entity.MenuEntity">
+        select
+        <include refid="menuColumn"/>
+        from RM_SYS_MENU_INFO
+        where VALID_IND='1'
+        and MENU_ID in
+        <foreach collection="array" item="menuPrtIds" index="index" open="(" close=")" separator=",">
+            #{menuPrtIds}
+        </foreach>
+    </select>
+
+    <select id="findOneTree" resultType="map">
+        select
+            me.MENU_ID as id ,
+            me.MENU_NM as name,
+            me.RESOURCE_TYPE as type
+        from RM_SYS_USER_POST_REL rel
+        left join RM_SYS_MENU_INFO me on rel.POST_CD=me.MENU_ID
+        where me.RESOURCE_TYPE  in ('01','02')
+        and me.VALID_IND='1'
+        and rel.USER_ID=#{userId}
+        order by me.SORT_LVL
+    </select>
+
+    <select id="findTwoTree" resultType="map">
+        select
+            me.MENU_ID as id ,
+            me.MENU_NM as name,
+            me.RESOURCE_TYPE as type
+        from RM_SYS_USER_POST_REL rel
+        left join RM_SYS_MENU_INFO me on rel.POST_CD=me.MENU_ID
+        where me.RESOURCE_TYPE  in ('03','04')
+        and me.VALID_IND='1'
+        and rel.USER_ID=#{userId}
+        <if test="parentId != null and parentId != ''">
+            and me.PARENT_ID = #{parentId}
+        </if>
+        order by me.SORT_LVL
+    </select>
+
+    <select id="findButtonTree" resultType="map">
+        select
+            me.MENU_ID as id ,
+            me.MENU_NM as name,
+            me.RESOURCE_TYPE as type
+        from RM_SYS_USER_POST_REL rel
+        left join RM_SYS_MENU_INFO me on rel.POST_CD=me.MENU_ID
+        where me.RESOURCE_TYPE  ='05'
+        and me.VALID_IND='1'
+        and rel.USER_ID=#{userId}
+        <if test="parentId != null and parentId != ''">
+            and me.PARENT_ID = #{parentId}
+        </if>
+        order by me.SORT_LVL
+    </select>
+
+    <select id="findGrandMenus" resultType="com.religion.zhiyun.sys.menus.entity.MenuEntity">
+        select
+        <include refid="menuColumn"/>
+        from  (select
+        distinct me.menu
+        from (
+        (select
+        POST_CD as menu,USER_ID as userId
+        from RM_SYS_USER_POST_REL)
+        UNION ALL
+        (select
+        pe.PMSN_CD as menu,rel.USER_ID as userId
+        from RM_SYS_ROLE_PESN pe
+        left join rm_sys_user_role_rel rel on rel.ROLE_ID=pe.ROLE_ID)
+        ) me where me.userId =#{userId}
+        ) men
+        join RM_SYS_MENU_INFO f on men.menu=f.MENU_ID and VALID_IND='1'
+        where f.RESOURCE_TYPE in ('02','05')
+        order by f.MENU_ID,f.SORT_LVL
+    </select>
+
+    <select id="findGrandParent" resultType="map">
+        select
+            parentId,GROUP_CONCAT(menuId) as menuIds,menuNm,iconNm
+        from (
+            (select
+                fz.PARENT_ID as parentId,GROUP_CONCAT(distinct fz.MENU_ID) menuId,s.MENU_NM as menuNm,s.ICON_NM as iconNm
+            from
+            (select
+                distinct me.menu
+            from (
+            (select
+                POST_CD as menu,USER_ID as userId
+            from RM_SYS_USER_POST_REL)
+            UNION ALL
+            (select
+                pe.PMSN_CD as menu,rel.USER_ID as userId
+            from RM_SYS_ROLE_PESN pe
+            left join rm_sys_user_role_rel rel on rel.ROLE_ID=pe.ROLE_ID)
+            ) me   where  me.userId =#{userId}
+            ) men
+            left join RM_SYS_MENU_INFO f on  men.menu=f.MENU_ID and RESOURCE_TYPE='05' and f.VALID_IND='1'
+            join RM_SYS_MENU_INFO fz on f.PARENT_ID=fz.MENU_ID and fz.VALID_IND='1'
+            join RM_SYS_MENU_INFO s on s.MENU_ID=fz.PARENT_ID and s.VALID_IND='1'
+            group by fz.PARENT_ID)
+        union all
+            (select
+                f.PARENT_ID as parentId,f.MENU_ID as menuId,s.MENU_NM as menuNm,s.ICON_NM as iconNm
+            from
+            (select
+                distinct me.menu
+            from (
+            (select
+            POST_CD as menu,USER_ID as userId
+            from RM_SYS_USER_POST_REL)
+            UNION ALL
+            (select
+                pe.PMSN_CD as menu,rel.USER_ID as userId
+            from RM_SYS_ROLE_PESN pe
+            left join rm_sys_user_role_rel rel on rel.ROLE_ID=pe.ROLE_ID)
+            ) me   where me.userId =#{userId}
+            ) men
+            left join RM_SYS_MENU_INFO f on  men.menu=f.MENU_ID and RESOURCE_TYPE='04' and f.VALID_IND='1'
+            join RM_SYS_MENU_INFO s on s.MENU_ID=f.PARENT_ID and s.VALID_IND='1')
+        ) ch group by ch.parentId,menuNm,iconNm
+    </select>
+
+    <select id="getMenus" resultType="String">
+        select
+            GROUP_CONCAT(MENU_ID) as menuIds
+        from RM_SYS_MENU_INFO
+        where VALID_IND='1'
+    </select>
+
+</mapper>

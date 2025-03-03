@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.religion.zhiyun.user.dao.SysUserMapper">
+
+    <sql id="userColumn">
+        USER_ID as userId,
+        LOGIN_NM as loginNm,
+        PASSWORDS as passwords,
+        USER_NM as userNm,
+        USER_MOBILE as userMobile,
+        USER_EMAIL as userEmail,
+        USER_PHOTO_URL as userPhotoUrl,
+        IDENTITY as identity,
+        USER_NBR as userNbr,
+        OFC_ID as ofcId,
+        CREATE_TIME as createTime,
+        VALID_IND as validInd,
+        REL_VENUES_ID as relVenuesId,
+        PROVINCE as province,
+        CITY as city,
+        AREA as area,
+        TOWN as town
+    </sql>
+
+    <insert id="add" parameterType="com.religion.zhiyun.user.entity.SysUserEntity"
+            useGeneratedKeys="true" keyProperty="userId" keyColumn="fileId">
+        INSERT INTO
+            RM_SYS_USER_INFO
+            (
+                 OFC_ID,
+                 DEP_ID,
+                 LOGIN_NM,
+                 PASSWORDS,
+                 USER_NBR,
+                 USER_NM,
+                 USER_EMAIL,
+                 USER_TEL,
+                 USER_MOBILE,
+                 USER_TYPE_CD,
+                 USER_PHOTO_URL,
+                 LOGIN_IP,
+                 LOGIN_TIME,
+                 LOGIN_IND,
+                 VALID_IND,
+                 USER_OA_NM,
+                 IDENTITY,
+                 CREATE_TIME,
+                 LAST_MODIFY_TIME,
+                 PROVINCE,
+                 CITY,
+                 AREA,
+                 TOWN,
+                 REL_VENUES_ID
+             )
+             VALUES
+            (
+                 10001,
+                 NULL,
+                 #{loginNm},
+                 #{passwords},
+                 #{userNbr},
+                 #{userNm},
+                 #{userEmail},
+                 NULL,
+                 #{userMobile},
+                 NULL,
+                 #{userPhotoUrl},
+                 NULL,
+                 NULL,
+                 '0',
+                 '1',
+                 NULL,
+                 #{identity},
+                 #{createTime},
+                 #{lastModifyTime},
+                 #{province},
+                 #{city},
+                 #{area},
+                 #{town},
+                 #{relVenuesId}
+             );
+    </insert>
+
+    <select id="queryByName" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+            <include refid="userColumn"/>
+        from RM_SYS_USER_INFO
+        where LOGIN_NM = #{loginNm} or USER_NM= #{loginNm} or USER_MOBILE= #{loginNm}
+    </select>
+
+    <select id="queryByUserId" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+             <include refid="userColumn"/>
+        from RM_SYS_USER_INFO
+        where USER_ID = #{userId}
+    </select>
+
+    <select id="getUserId" resultType="map">
+        select
+        <include refid="userColumn"/>
+        from RM_SYS_USER_INFO
+        where USER_ID = #{userId}
+    </select>
+
+    <select id="queryByNbr" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+            <include refid="userColumn"/>
+        from RM_SYS_USER_INFO where USER_NBR = #{userNbr}
+    </select>
+
+    <select id="queryByTel" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+        <include refid="userColumn"/>
+        from RM_SYS_USER_INFO
+        where  USER_MOBILE= #{userMobile}
+        or LOGIN_NM LIKE CONCAT('%',#{userMobile},'%')
+        or USER_NM LIKE CONCAT('%',#{userMobile},'%')
+    </select>
+
+    <select id="queryTelNum" resultType="java.lang.Long">
+
+        select SUM(num) from(
+            (select COUNT(USER_ID) as num from RM_SYS_USER_INFO where VALID_IND=1 and USER_MOBILE= #{userMobile})
+        union all (select COUNT(MANAGER_ID) as num from rm_venues_manager_info where VALID_IND=1 and MANAGER_MOBILE= #{userMobile})
+        ) as total
+    </select>
+
+    <select id="getUsersByPage" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+            <include refid="userColumn"/>
+        from RM_SYS_USER_INFO ve
+        where VALID_IND='1'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  USER_NM LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.searchTwo != null and vo.searchTwo != ''">
+            AND  IDENTITY = #{vo.searchTwo}
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            AND ve.REL_VENUES_ID =#{vo.venues}
+        </if>
+
+        order by LAST_MODIFY_TIME desc
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="getTotal" resultType="java.lang.Long">
+        select
+            count(USER_ID)
+        from RM_SYS_USER_INFO ve
+        where  VALID_IND='1'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  USER_NM LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.searchTwo != null and vo.searchTwo != ''">
+            AND  IDENTITY = #{vo.searchTwo}
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            AND ve.REL_VENUES_ID =#{vo.venues}
+        </if>
+    </select>
+
+    <select id="getMaxUserNbr" resultType="java.lang.Long">
+        select max(USER_NBR) as userNbr from RM_SYS_USER_INFO
+    </select>
+
+    <update id="delete">
+        update RM_SYS_USER_INFO set VALID_IND='0' where USER_ID = #{userId}
+    </update>
+
+    <update id="update">
+        update RM_SYS_USER_INFO
+        set
+            LOGIN_NM = #{loginNm},
+            USER_NM = #{userNm},
+            USER_MOBILE = #{userMobile},
+            USER_EMAIL = #{userEmail},
+            USER_PHOTO_URL = #{userPhotoUrl},
+            IDENTITY = #{identity},
+            REL_VENUES_ID = #{relVenuesId},
+            PROVINCE = #{province},
+            CITY = #{city},
+            AREA = #{area},
+            TOWN = #{town},
+            LAST_MODIFY_TIME = #{lastModifyTime}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <select id="queryStarter" resultType="java.lang.String">
+        select
+            u.IDENTITY as identity
+        from act_hi_identitylink h
+        left join rm_sys_user_info u on h.USER_ID_=u.USER_MOBILE
+        where h.TYPE_='starter'
+        <if test="procInstId != null and procInstId != ''">
+            and h.PROC_INST_ID_ = #{procInstId}
+        </if>
+    </select>
+
+    <select id="getSanByVenues" resultType="java.util.Map">
+        select
+            zy.USER_NBR as userNbr,
+            USER_MOBILE as userMobile,
+            USER_NM as userNm
+        from rm_sys_user_info zy
+        where zy.VALID_IND='1'
+        and IDENTITY in ('10000006','10000007')
+        <if test="relVenuesId != null and relVenuesId != ''">
+            AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+        </if>
+    </select>
+
+    <select id="getJgByVenues" resultType="map">
+        select
+            distinct	zz.userMobile
+        from(
+            (select zy.USER_NBR as userNbr,
+                    zy.USER_MOBILE as userMobile,
+                    zy.USER_NM as userNm
+                from rm_sys_user_info zy
+                where zy.VALID_IND='1'
+                <if test="relVenuesId != null and relVenuesId != ''">
+                    AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+                </if>
+            )union all
+            (select jg.USER_NBR as userNbr,
+                    jg.USER_MOBILE as userMobile,
+                    jg.USER_NM as userNm
+                from rm_sys_user_info jg
+                left join rm_sys_user_info zy on jg.town=zy.town
+                where jg.VALID_IND='1'
+                and jg.IDENTITY='10000005'
+                and zy.IDENTITY='10000007'
+                <if test="relVenuesId != null and relVenuesId != ''">
+                    AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+                </if>
+            )
+        ) zz
+
+    </select>
+
+    <select id="getJWVenues" resultType="java.util.Map">
+        select distinct
+            jw.USER_NBR as userNbr,
+            jw.USER_MOBILE as userMobile,
+            jw.USER_NM as userNm
+        from rm_sys_user_info jw
+        left join rm_sys_user_info zy on jw.town=zy.town and zy.IDENTITY='10000007'
+        where jw.VALID_IND='1'
+        and jw.IDENTITY='10000004'
+        <if test="relVenuesId != null and relVenuesId != ''">
+            AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+        </if>
+    </select>
+
+    <select id="getAllByVenues" resultType="java.util.Map">
+        (
+            select
+                zy.USER_NBR as userNbr,
+                zy.USER_MOBILE as userMobile,
+                zy.USER_NM as userNm
+            from rm_sys_user_info zy
+            where zy.VALID_IND='1'
+            <if test="relVenuesId != null and relVenuesId != ''">
+                AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+            </if>
+        ) union all (
+            select distinct
+                al.USER_NBR as userNbr,
+                al.USER_MOBILE as userMobile,
+                al.USER_NM as userNm
+            from rm_sys_user_info al
+            left join rm_sys_user_info zy on al.town=zy.town and zy.IDENTITY='10000007'
+            where al.VALID_IND='1'
+            and al.IDENTITY in ('10000004','10000005')
+            <if test="relVenuesId != null and relVenuesId != ''">
+                AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+            </if>
+        ) union all (
+            select distinct
+                al.USER_NBR as userNbr,
+                al.USER_MOBILE as userMobile,
+                al.USER_NM as userNm
+            from rm_sys_user_info al
+            left join rm_sys_user_info zy on al.area=zy.area and zy.IDENTITY='10000007'
+            where al.VALID_IND='1'
+            and al.IDENTITY in ('10000002','10000003')
+            <if test="relVenuesId != null and relVenuesId != ''">
+                AND  zy.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+            </if>
+        )
+    </select>
+
+    <select id="getJie" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+            jie.USER_NM as userNm,
+            jie.USER_MOBILE as userMobile
+        FROM  RM_SYS_USER_INFO zu
+        LEFT JOIN RM_SYS_USER_INFO jie on zu.town=jie.town and jie.IDENTITY  in ('10000004','10000005')
+        WHERE jie.VALID_IND='1'
+        <if test="loginNm != null and loginNm != ''">
+            and zu.USER_MOBILE = #{loginNm}
+        </if>
+        <if test="identity != null and identity != ''">
+            and zu.IDENTITY = #{identity}
+        </if>
+    </select>
+
+    <select id="getQu" resultType="com.religion.zhiyun.user.entity.SysUserEntity">
+        select
+            qu.USER_NM as userNm,
+            qu.USER_MOBILE as userMobile
+        FROM  RM_SYS_USER_INFO jie
+        LEFT JOIN RM_SYS_USER_INFO qu on qu.area=jie.area and qu.IDENTITY  in ('10000002','10000003')
+        WHERE qu.VALID_IND='1'
+        <if test="loginNm != null and loginNm != ''">
+            and jie.USER_MOBILE = #{loginNm}
+        </if>
+        <if test="identity != null and identity != ''">
+            and jie.IDENTITY = #{identity}
+        </if>
+    </select>
+
+    <select id="getYuanNum" resultType="int">
+        select
+            count(u.USER_ID)
+        from RM_SYS_USER_INFO u
+        where u.IDENTITY='10000007'
+        and u.VALID_IND='1'
+        AND  u.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+        and u.USER_ID!=#{userId}
+    </select>
+
+    <select id="getZzhNum" resultType="int">
+        select
+        count(zz.USER_ID)
+        from RM_SYS_USER_INFO zz
+        where zz.IDENTITY='10000006'
+        and zz.VALID_IND='1'
+        and zz.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+        and zz.USER_ID!=#{userId}
+    </select>
+
+    <update id="updatePassword">
+        update RM_SYS_USER_INFO
+        set
+            PASSWORDS = #{passwords},
+            LAST_MODIFY_TIME = #{lastModifyTime}
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <select id="getZuZhang" resultType="map">
+        SELECT
+            zz.LOGIN_NM as loginNm,zz.USER_NM as userNm,zz.USER_MOBILE as userMobile
+        FROM rm_sys_user_info zy,rm_sys_user_info zz
+        where zz.REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+        and zz.VALID_IND='1'
+        and zz.IDENTITY='10000006'
+        and zy.IDENTITY='10000007'
+        <if test="userMobile != null and userMobile != ''">
+            and zy.USER_MOBILE=#{userMobile}
+        </if>
+        <if test="loginNm != null and loginNm != ''">
+            and zy.LOGIN_NM=#{loginNm}
+        </if>
+
+    </select>
+
+    <select id="getJieGan" resultType="map">
+        SELECT jg.LOGIN_NM as loginNm,jg.USER_NM as userNm,jg.USER_MOBILE as userMobile
+        FROM rm_sys_user_info zz,rm_sys_user_info jg
+        where zz.town=jg.town
+        and jg.VALID_IND='1'
+        and jg.IDENTITY='10000005'
+        and zz.IDENTITY='10000006'
+        <if test="userMobile != null and userMobile != ''">
+            and zz.USER_MOBILE=#{userMobile}
+        </if>
+        <if test="loginNm != null and loginNm != ''">
+            and zz.LOGIN_NM=#{loginNm}
+        </if>
+    </select>
+
+    <select id="getJieWei" resultType="map">
+        SELECT jw.LOGIN_NM as loginNm,jw.USER_NM as userNm,jw.USER_MOBILE as userMobile
+        FROM rm_sys_user_info jw,rm_sys_user_info jg
+        where jw.town=jg.town
+        and jw.VALID_IND='1'
+        and jw.IDENTITY='10000004'
+        and jg.IDENTITY='10000005'
+        <if test="userMobile != null and userMobile != ''">
+            and jg.USER_MOBILE=#{userMobile}
+        </if>
+        <if test="loginNm != null and loginNm != ''">
+            and jg.LOGIN_NM=#{loginNm}
+        </if>
+    </select>
+
+    <select id="getQuGan" resultType="map">
+        SELECT qg.LOGIN_NM as loginNm,qg.USER_NM as userNm,qg.USER_MOBILE as userMobile
+        FROM rm_sys_user_info jw,rm_sys_user_info qg
+        where qg.area=jw.area
+        and qg.VALID_IND='1'
+        and qg.IDENTITY='10000003'
+        and jw.IDENTITY='10000004'
+        <if test="userMobile != null and userMobile != ''">
+            and jw.USER_MOBILE=#{userMobile}
+        </if>
+        <if test="loginNm != null and loginNm != ''">
+            and jw.LOGIN_NM=#{loginNm}
+        </if>
+    </select>
+
+    <select id="getQuWei" resultType="map">
+        SELECT qw.LOGIN_NM as loginNm,qw.USER_NM  as userNm,qw.USER_MOBILE as userMobile
+        FROM rm_sys_user_info qw,rm_sys_user_info qg
+        where qg.area=qw.area
+        and qw.VALID_IND='1'
+        and qw.IDENTITY='10000002'
+        and qg.IDENTITY='10000003'
+        <if test="userMobile != null and userMobile != ''">
+            and qg.USER_MOBILE=#{userMobile}
+        </if>
+        <if test="loginNm != null and loginNm != ''">
+            and qg.LOGIN_NM=#{loginNm}
+        </if>
+    </select>
+
+    <select id="queryBySearch" resultType="map">
+        select
+            USER_ID as userId,
+            USER_NM as userNm,
+            USER_MOBILE as userMobile,
+            USER_PHOTO_URL as userPhotoUrl,
+            IDENTITY as identity,
+            ro.ROLE_NM as identityCn,
+            AREA as area,
+            aa.AREA_NAME as areaName,
+            tn.TOWN_NAME as townName,
+            TOWN as town
+        from RM_SYS_USER_INFO u
+        left join rm_sys_role ro on ro.ROLE_ID=u.IDENTITY
+        left join rm_town_info tn on tn.TOWN_CODE=u.TOWN
+        left join rm_area_info aa on aa.AREA_CODE=u.AREA
+        where  USER_MOBILE= #{search}
+        or LOGIN_NM LIKE CONCAT('%',#{search},'%')
+        or USER_NM LIKE CONCAT('%',#{search},'%')
+    </select>
+
+    <select id="getVenuesNm" resultType="String">
+        select GROUP_CONCAT(VENUES_NAME) as name
+        from rm_venues_info
+        where VENUES_ID in
+        <foreach collection="venuesIdArr" item="item" index="index" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+</mapper>

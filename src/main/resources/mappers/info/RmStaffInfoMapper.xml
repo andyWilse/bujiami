@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.religion.zhiyun.staff.dao.RmStaffInfoMapper">
+    <sql id="staffColumn">
+        STAFF_ID as staffId,
+        STAFF_CD as staffCd,
+        STAFF_CN_NM as staffName,
+        CERT_TYPE_CD as certTypeCd,
+        CERT_NBR as certNbr,
+        SEX as sex,
+        RELIGIOUS_SECT as religiousSect,
+        RELIGIOUS_TYPE as religiousType,
+        NATION as nation,
+        NATIVE_PLACE as nativePlace,
+        RELIGIOUS_GROUP as religiousGroup,
+        GROUP_POST as groupPost,
+        RELIGIOUS_VENUES as religiousVenues,
+        VENUES_POST as venuesPost,
+        BIRTHDAY as birthday,
+        MAILING_ADDRESS as mailingAddress,
+        REGISTERED_RESIDENCE as registeredResidence,
+        STAFF_PICTURE as staffPicture,
+        STAFF_TELPHONE as staffTelphone,
+        POLITICAL as political,
+        SOCIETY_CULTURE as societyCulture,
+        SOCIETY_SCHOOL as societySchool,
+        RELIGIOUS_CULTURE as religiousCulture,
+        RELIGIOUS_SCHOOL as religiousSchool,
+        COMPANY as company,
+        STAFF_STATUS as staffStatus,
+        STAFF_POST as staffPost,
+        REL_VENUES_ID as relVenuesId,
+        POSTTION as posttion,
+        CERTIFICATE_UNIT as certificateUnit,
+        CERTIFICATE_TIME as certificateTime,
+        CERTIFICATE_NUMBER as certificateNumber,
+        CREATOR as creator,
+        CREATE_TIME as createTime,
+        LAST_MODIFIER as lastModifier,
+        LAST_MODIFY_TIME as lastModifyTime
+    </sql>
+
+    <insert id="add" parameterType="com.religion.zhiyun.staff.entity.StaffEntity">
+        insert into rm_staff_info
+        VALUES(#{staffId},#{staffCd},#{staffName},#{certTypeCd},#{certNbr},#{sex},#{religiousSect},#{religiousType},#{nation},#{nativePlace},
+                #{religiousGroup},#{religiousVenues},#{venuesPost},#{birthday},#{mailingAddress},#{registeredResidence},#{staffPicture},
+                #{staffTelphone},#{political},#{societyCulture},#{societySchool},#{religiousCulture},#{religiousSchool},#{company},
+                #{staffStatus},#{staffPost},#{relVenuesId},#{posttion},#{certificateUnit},#{certificateTime},#{certificateNumber},
+                #{creator},#{createTime},#{lastModifier},#{lastModifyTime})
+    </insert>
+
+    <update id="update">
+        update rm_staff_info
+        set
+            RELIGIOUS_SECT=#{religiousSect},
+            STAFF_PICTURE=#{staffPicture},
+            STAFF_TELPHONE=#{staffTelphone},
+            STAFF_POST=#{staffPost},
+            REL_VENUES_ID=#{relVenuesId},
+            CERT_TYPE_CD =#{certTypeCd},
+            CERT_NBR =#{certNbr},
+            LAST_MODIFIER=#{lastModifier},
+            LAST_MODIFY_TIME= #{lastModifyTime}
+        WHERE STAFF_ID = #{staffId}
+    </update>
+
+    <update id="delete">
+        update RM_STAFF_INFO set STAFF_STATUS='02' where STAFF_ID = #{staffId}
+    </update>
+
+    <select id="getAllStaff" resultType="map">
+        select
+            STAFF_ID as staffId,
+            STAFF_CN_NM as staffName,
+            STAFF_TELPHONE as staffTelphone
+        from rm_staff_info
+        where STAFF_STATUS!='02'
+        <if test="search != null and search != ''">
+            and  STAFF_CN_NM LIKE CONCAT('%',#{search},'%')
+        </if>
+        limit #{page},#{size}
+    </select>
+    <select id="getAllStaffTotal" resultType="long">
+        select
+            count(STAFF_ID)
+        from rm_staff_info
+        where STAFF_STATUS!='02'
+        <if test="search != null and search != ''">
+            and  STAFF_CN_NM LIKE CONCAT('%',#{search},'%')
+        </if>
+    </select>
+
+    <select id="getTotal" resultType="java.lang.Long">
+        select count(STAFF_ID)
+        from RM_STAFF_INFO
+        where STAFF_STATUS!='02'
+        <if test="staffName != null and staffName != ''">
+            AND  STAFF_CN_NM LIKE CONCAT('%',#{staffName},'%')
+        </if>
+        <if test="staffPost != null and staffPost != ''">
+            AND  STAFF_POST = #{staffPost}
+        </if>
+        <if test="religiousSect != null and religiousSect != ''">
+            AND  RELIGIOUS_SECT = #{religiousSect}
+        </if>
+    </select>
+
+    <select id="getStaffByPage" resultType="com.religion.zhiyun.staff.entity.StaffEntity">
+        select
+        STAFF_ID as staffId,
+        STAFF_CD as staffCd,
+        STAFF_CN_NM as staffName,
+        CERT_TYPE_CD as certTypeCd,
+        CERT_NBR as certNbr,
+        SEX as sex,
+        d.DICT_CN_DESC as religiousSect,
+        RELIGIOUS_TYPE as religiousType,
+        NATION as nation,
+        NATIVE_PLACE as nativePlace,
+        gr.GROUP_NAME as religiousGroup,
+        GROUP_POST as groupPost,
+        RELIGIOUS_VENUES as religiousVenues,
+        VENUES_POST as venuesPost,
+        BIRTHDAY as birthday,
+        MAILING_ADDRESS as mailingAddress,
+        REGISTERED_RESIDENCE as registeredResidence,
+        STAFF_PICTURE as staffPicture,
+        STAFF_TELPHONE as staffTelphone,
+        POLITICAL as political,
+        SOCIETY_CULTURE as societyCulture,
+        SOCIETY_SCHOOL as societySchool,
+        RELIGIOUS_CULTURE as religiousCulture,
+        RELIGIOUS_SCHOOL as religiousSchool,
+        COMPANY as company,
+        STAFF_STATUS as staffStatus,
+        STAFF_POST as staffPost,
+        REL_VENUES_ID as relVenuesId,
+        POSTTION as posttion,
+        CERTIFICATE_UNIT as certificateUnit,
+        CERTIFICATE_TIME as certificateTime,
+        CERTIFICATE_NUMBER as certificateNumber,
+        ve.CREATOR as creator,
+        ve.CREATE_TIME as createTime,
+        ve.LAST_MODIFIER as lastModifier,
+        ve.LAST_MODIFY_TIME as lastModifyTime
+        from RM_STAFF_INFO ve
+        left join RM_GROUP_INFO gr on ve.RELIGIOUS_GROUP=gr.GROUP_CD
+        left join RM_SYS_DICT d on ve.RELIGIOUS_SECT=d.DICT_CD
+        where STAFF_STATUS!='02'
+        <if test="staffName != null and staffName != ''">
+            AND  STAFF_CN_NM LIKE CONCAT('%',#{staffName},'%')
+        </if>
+        <if test="staffPost != null and staffPost != ''">
+            AND  STAFF_POST = #{staffPost}
+        </if>
+        <if test="religiousSect != null and religiousSect != ''">
+            AND  RELIGIOUS_SECT = #{religiousSect}
+        </if>
+        order by ve.LAST_MODIFY_TIME desc
+        limit #{page},#{size}
+    </select>
+
+    <select id="getMaxStaffCd" resultType="java.lang.Long">
+        select max(STAFF_CD) as staffCd from RM_STAFF_INFO
+    </select>
+
+    <select id="getManagerByVenuesId" resultType="String">
+        select
+            CONCAT_WS(',',res.MANAGER_MOBILE,lia.MANAGER_MOBILE,gro.MANAGER_MOBILE) as c
+        from rm_venues_info ve
+        left join rm_venues_manager_info res on res.MANAGER_ID=ve.RESPONSIBLE_PERSON and res.MANAGER_TYPE_CD='01' and res.VALID_IND='1'
+        left join rm_venues_manager_info gro on gro.MANAGER_ID=ve.GROUP_MEMBERS and gro.MANAGER_TYPE_CD='02' and gro.VALID_IND='1'
+        left join rm_venues_manager_info lia on lia.MANAGER_ID=ve.LIAISON_MAN and lia.MANAGER_TYPE_CD='03' and lia.VALID_IND='1'
+        where 1=1
+        <if test="relVenuesId != null and relVenuesId != ''">
+            AND  ve.VENUES_ID = #{relVenuesId}
+        </if>
+    </select>
+
+    <select id="getByTel" resultType="map">
+        select
+            MANAGER_CN_NM as name,
+            MANAGER_TYPE_CD as type,
+            PASSWORDS as passwords,
+            VALID_IND as flag,
+            MANAGER_ID as id
+        from rm_venues_manager_info
+        where 1=1
+        <if test="username != null and username != ''">
+            AND  MANAGER_MOBILE=#{username}
+        </if>
+    </select>
+    <select id="getManagerById" resultType="java.util.Map">
+        select
+            m.MANAGER_CN_NM as managerCnNm,
+            m.MANAGER_MOBILE as managerMobile,
+            m.MANAGER_PHOTO_PATH as managerPhotoPath,
+            d.DICT_CN_DESC as religiousSect,
+            m.CERT_NBR as certNbr,
+            case m.MANAGER_TYPE_CD
+            when '01' then '负责人'
+            when '02' then '管理组成员'
+            when '03' then '紧急联系人'
+            end as managerType,
+            m.MANAGER_TYPE_CD as managerTypeCd,
+            m.RELIGIOUS_GROUP as religiousGroup,
+            m.GROUP_POST as   groupPost,
+            m.VENUES_POST as   venuesPost,
+            m.BIRTHDAY as   birthday,
+            m.MAILING_ADDRESS as   mailingAddress,
+            m.REGISTERED_RESIDENCE as   registeredResidence,
+            m.POLITICAL as   political,
+            m.SOCIETY_CULTURE as   societyCulture,
+            m.SOCIETY_SCHOOL as   societySchool,
+            m.RELIGIOUS_CULTURE as   religiousCulture,
+            m.RELIGIOUS_SCHOOL as   religiousSchool,
+            m.COMPANY as   company,
+            m.STAFF_POST as   staffPost,
+            m.POSTTION as   posttion,
+            m.CERTIFICATE_UNIT as   certificateUnit,
+            m.CERTIFICATE_TIME as   certificateTime,
+            m.CERTIFICATE_NUMBER as   certificateNumber
+        from rm_venues_manager_info m
+        left join rm_sys_dict d on d.DICT_CD=m.RELIGIOUS_SECT
+        where MANAGER_ID=#{ManagerId}
+    </select>
+
+    <select id="getVenuesByManagerId" resultType="java.util.Map">
+		select
+            VENUES_ID as id,
+            VENUES_NAME as name,
+            d.DICT_CN_DESC as type,
+            ORGANIZATION as address,
+            case m.MANAGER_TYPE_CD
+            when '01' then '负责人'
+            when '02' then '管理组成员'
+            when '03' then '紧急联系人'
+            end as managerType,
+            m.MANAGER_TYPE_CD as managerTypeCd,
+            m.MANAGER_CN_NM as person,
+            v.PICTURES_PATH as picturesPath
+		from rm_venues_info v
+		left join RM_SYS_DICT d on v.RELIGIOUS_SECT=d.DICT_CD
+		left join rm_venues_manager_info m on v.RESPONSIBLE_PERSON=m.MANAGER_ID
+		WHERE RESPONSIBLE_PERSON=#{ManagerId}
+    </select>
+    <select id="getFilingByManagerId" resultType="java.util.Map">
+        SELECT
+        FILING_ID as id,
+        TASK_NAME as filingNm
+        FROM rm_filing_info
+        where FILING_STATUS='02'
+        <if test="ManagerId!=null and ManagerId!=''">
+            and RESPONSIBLE_PERSON = #{ManagerId}
+        </if>
+    </select>
+
+    <update id="updatePassword">
+        update rm_venues_manager_info
+        set
+            PASSWORDS = #{passwords},
+            LAST_MODIFIER=#{lastModifier},
+            LAST_MODIFY_TIME= #{lastModifyTime}
+        WHERE MANAGER_ID = #{staffId}
+    </update>
+
+    <select id="findVenuesStaffs" resultType="String">
+        select
+         GROUP_CONCAT(STAFF_CN_NM) as name
+        from rm_staff_info
+        where STAFF_ID in
+        <foreach collection="array" item="staffIds" index="index" open="(" close=")" separator=",">
+            #{staffIds}
+        </foreach>
+    </select>
+
+    <select id="getVenuesStaff" resultType="String">
+        SELECT
+            venues_staff as venuesStaff
+        FROM rm_venues_info
+        where (venues_id = #{venuesId}
+        OR venues_name LIKE CONCAT('%',#{venuesId},'%')
+        )
+    </select>
+
+    <select id="getStaffVenues" resultType="map">
+        SELECT
+            venues_staff as venuesStaff,
+            VENUES_ID as venuesId ,
+            VENUES_NAME as venuesName,
+            VENUES_ADDRES as venuesAddres
+        FROM rm_venues_info
+        where (venues_id = #{venuesId}
+        OR venues_name LIKE CONCAT('%',#{venuesId},'%')
+        )
+    </select>
+
+    <select id="getStaffByVenues" resultType="map">
+        SELECT
+            STAFF_ID as staffId,
+            STAFF_CN_NM as staffName,
+            STAFF_TELPHONE as staffTelphone
+        from rm_staff_info
+        where  STAFF_STATUS!='02'
+        <if test="vo.venues != null and vo.venues != ''">
+            and STAFF_ID IN
+            <foreach collection="vo.searchArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        <if test="vo.searchTwo != null and vo.searchTwo != ''">
+            and STAFF_TELPHONE LIKE concat('%',#{vo.searchTwo},'%')
+        </if>
+        <if test="vo.searchThree != null and vo.searchThree != ''">
+            and STAFF_CN_NM LIKE concat('%',#{vo.searchThree},'%')
+        </if>
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            and STAFF_CN_NM LIKE concat('%',#{vo.searchOne},'%')
+        </if>
+        order by STAFF_CN_NM
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="getStaffTotal" resultType="long">
+        SELECT count(STAFF_ID) as total from rm_staff_info
+        where  STAFF_STATUS!='02'
+        <if test="vo.searchTwo != null and vo.searchTwo != ''">
+            and STAFF_TELPHONE LIKE concat('%',#{vo.searchTwo},'%')
+        </if>
+        <if test="vo.searchThree != null and vo.searchThree != ''">
+            and STAFF_CN_NM LIKE concat('%',#{vo.searchThree},'%')
+        </if>
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            and STAFF_CN_NM LIKE concat('%',#{vo.searchOne},'%')
+        </if>
+    </select>
+
+    <update id="updateVenuesStaff">
+        update rm_venues_info set venues_staff=#{venuesStaff}
+        where (venues_id = #{venuesId} OR venues_name LIKE CONCAT('%',#{venuesId},'%') )
+    </update>
+
+    <select id="getStaffById" resultType="com.religion.zhiyun.staff.entity.StaffEntity">
+        select
+            STAFF_CN_NM as staffName
+        from rm_staff_info
+        where  1=1
+        <if test="staffId!=null and staffId!=''">
+            and STAFF_ID = #{staffId}
+        </if>
+    </select>
+</mapper>

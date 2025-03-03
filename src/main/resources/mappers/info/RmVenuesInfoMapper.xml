@@ -1,0 +1,610 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.religion.zhiyun.venues.dao.RmVenuesInfoMapper">
+    <sql id="venuesColumn">
+        VENUES_ID as venuesId ,
+        VENUES_NAME as venuesName,
+        RELIGIOUS_SECT as religiousSect,
+        REGISTER_NBR as registerNbr,
+        VENUES_PHONE as venuesPhone,
+        ORGANIZATION as organization,
+        VENUES_ADDRES as venuesAddres,
+        PICTURES_PATH as picturesPath,
+        RESPONSIBLE_PERSON  as responsiblePerson,
+        LIAISON_MAN as liaisonMan,
+        BRIEF_INTRODUCTION as briefIntroduction,
+        VENUES_STATUS as venuesStatus,
+        CREATOR as creator,
+        CREATE_TIME as createTime,
+        LAST_MODIFIER as lastModifier,
+        LAST_MODIFY_TIME as lastModifyTime,
+        LONGITUDE as longitude,
+        LATITUDE as Latitude,
+        LATITUDE as latitudes,
+        GROUP_MEMBERS as groupMembers,
+        PROVINCE as province,
+        CITY as city,
+        AREA as area,
+        TOWN as  town,
+        VENUES_STAFF as venuesStaff
+    </sql>
+
+    <sql id="twoColumn">
+        VENUES_ID as venuesId ,
+        VENUES_NAME as venuesName,
+        rm_venues_info.RELIGIOUS_SECT as religiousSect,
+        REGISTER_NBR as registerNbr,
+        VENUES_PHONE as venuesPhone,
+        ORGANIZATION as organization,
+        VENUES_ADDRES as venuesAddres,
+        PICTURES_ONE as picturesOne,
+        PICTURES_TWO as picturesTwo,
+        PICTURES_THREE as picturesThree,
+        rm_venues_info.RESPONSIBLE_PERSON  as responsiblePerson,
+        LIAISON_MAN as liaisonMan,
+        BRIEF_INTRODUCTION as briefIntroduction,
+        VENUES_STATUS as venuesStatus,
+        rm_staff_info.STAFF_CD as staffCd,
+        STAFF_CN_NM as staffName,
+        CERT_TYPE_CD as certTypeCd,
+        CERT_NBR as certNbr,
+        STAFF_PICTURE as staffPicture,
+        STAFF_TELPHONE as staffTelphone,
+        STAFF_STATUS as staffStatus,
+        STAFF_POST as staffPost,
+    </sql>
+
+    <select id="getByVenuesFaculty" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        SELECT <include refid="twoColumn"/>
+        FROM rm_venues_info
+        INNER JOIN rm_staff_info ON rm_staff_info.STAFF_CD=rm_venues_info.RESPONSIBLE_PERSON
+        <!--<where>
+            <if test="venuesName!=null and venuesName!=''">
+                VENUES_NAME LIKE concat('%',#{venuesName},'%')
+            </if>
+            <if test="venuesName!=null and venuesName!=''">
+                STAFF_CN_NM=#{responsiblePerson}
+            </if>
+        </where>-->
+    </select>
+
+    <select id="querySelect" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        select
+            VENUES_ID as venuesId ,
+            VENUES_NAME as venuesName,
+            VENUES_ADDRES as venuesAddres
+        from RM_VENUES_INFO
+        where VENUES_STATUS!='02'
+        <if test="vo.searchOne!=null and vo.searchOne!=''">
+            and VENUES_NAME LIKE concat('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.town!=null and vo.town!=''">
+            and TOWN =#{vo.town}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="queryVenues" resultType="map">
+        select
+            VENUES_ID as venuesId ,
+            VENUES_NAME as venuesName
+        from RM_VENUES_INFO ve
+        where VENUES_STATUS!='02'
+        <if test="vo.searchOne!=null and vo.searchOne!=''">
+            and( RESPONSIBLE_PERSON LIKE concat('%',#{vo.searchOne},'%')
+                    or VENUES_ADDRES LIKE concat('%',#{vo.searchOne},'%')
+                    or VENUES_NAME LIKE concat('%',#{vo.searchOne},'%')
+                    or VENUES_ID=#{vo.searchOne}
+            )
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+
+    </select>
+
+    <insert id="add" parameterType="com.religion.zhiyun.venues.entity.VenuesEntity"
+            useGeneratedKeys="true" keyProperty="venuesId">
+        insert into RM_VENUES_INFO(
+            VENUES_NAME,
+            RELIGIOUS_SECT,
+            REGISTER_NBR,
+            VENUES_PHONE,
+            ORGANIZATION,
+            VENUES_ADDRES,
+            PICTURES_PATH,
+            RESPONSIBLE_PERSON,
+            LIAISON_MAN,
+            BRIEF_INTRODUCTION,
+            VENUES_STATUS,
+            CREATOR,
+            CREATE_TIME,
+            LAST_MODIFIER,
+            LAST_MODIFY_TIME,
+            LONGITUDE,
+            LATITUDE,
+            PROVINCE,
+            CITY,
+            AREA,
+            TOWN,
+            VENUES_STAFF,
+            GROUP_MEMBERS
+        )values (
+                    #{venuesName},
+                    #{religiousSect},
+                    #{registerNbr},
+                    #{venuesPhone},
+                    #{organization},
+                    #{venuesAddres},
+                    #{picturesPath},
+                    #{responsiblePerson},
+                    #{liaisonMan},
+                    #{briefIntroduction},
+                    #{venuesStatus},
+                    #{creator},
+                    #{createTime},
+                    #{lastModifier},
+                    #{lastModifyTime},
+                    #{longitude},
+                    #{Latitude},
+                    #{province},
+                    #{city},
+                    #{area},
+                    #{town},
+                    #{venuesStaff},
+                    #{groupMembers}
+                )
+    </insert>
+
+    <update id="update" parameterType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        UPDATE
+            RM_VENUES_INFO
+        set
+            VENUES_NAME =#{venuesName},
+            RELIGIOUS_SECT =#{religiousSect},
+            REGISTER_NBR =#{registerNbr},
+            VENUES_PHONE =#{venuesPhone},
+            ORGANIZATION =#{organization},
+            VENUES_ADDRES =#{venuesAddres},
+            PICTURES_PATH =#{picturesPath},
+            RESPONSIBLE_PERSON  =#{responsiblePerson},
+            LIAISON_MAN =#{liaisonMan},
+            BRIEF_INTRODUCTION =#{briefIntroduction},
+            LAST_MODIFIER =#{lastModifier},
+            LAST_MODIFY_TIME =#{lastModifyTime},
+            LONGITUDE =#{longitude},
+            LATITUDE =#{latitudes},
+            GROUP_MEMBERS =#{groupMembers},
+            PROVINCE =#{province},
+            CITY =#{city},
+            AREA =#{area},
+            TOWN =#{ town},
+            VENUES_STAFF =#{venuesStaff}
+        WHERE VENUES_ID = #{venuesId}
+    </update>
+
+    <update id="updateFillVenues" parameterType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        UPDATE
+            RM_VENUES_INFO
+        set
+            PICTURES_PATH=#{picturesPath},
+            VENUES_PHONE=#{venuesPhone},
+            BRIEF_INTRODUCTION=#{briefIntroduction},
+            LAST_MODIFIER=#{lastModifier},
+            LAST_MODIFY_TIME= #{lastModifyTime}
+        WHERE VENUES_ID = #{venuesId}
+    </update>
+
+    <update id="delete" >
+        update RM_VENUES_INFO set VENUES_STATUS='02' where VENUES_ID = #{venuesId}
+    </update>
+
+    <select id="getByResponsiblePerson" parameterType="String" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        select
+            *
+        from RM_VENUES_INFO
+        where RESPONSIBLE_PERSON=#{responsiblePerson}
+    </select>
+
+    <select id="querySectAll" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        select
+            <include refid="venuesColumn"/>
+        from RM_VENUES_INFO
+        <where>
+            <if test="religiousSect!=null and religiousSect!=''">
+                RELIGIOUS_SECT=#{religiousSect}
+            </if>
+        </where>
+    </select>
+
+    <select id="getVenueByID" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        select
+            <include refid="venuesColumn"/>
+        from RM_VENUES_INFO
+        where VENUES_ID=#{venuesId}
+    </select>
+
+    <select id="getAllNum" resultType="map">
+        SELECT
+            COUNT(VENUES_ID) AS total,
+            SUM(CASE WHEN RELIGIOUS_SECT = '100100000005' THEN 1 ELSE 0 END) AS Islamism,
+            SUM(CASE WHEN RELIGIOUS_SECT = '100100000003' THEN 1 ELSE 0 END) AS Christianity,
+            SUM(CASE WHEN RELIGIOUS_SECT = '100100000004' THEN 1 ELSE 0 END) AS Catholicism,
+            SUM(CASE WHEN RELIGIOUS_SECT = '100100000001' THEN 1 ELSE 0 END) AS Buddhism,
+            SUM(CASE WHEN RELIGIOUS_SECT = '100100000002' THEN 1 ELSE 0 END) AS Taoism
+        FROM rm_venues_info ve
+        where ve.VENUES_STATUS='01'
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getDialogVenue" resultType="map">
+        SELECT
+            ve.VENUES_NAME as venuesName,
+            ma.MANAGER_CN_NM as  managerCnNm,
+            ma.MANAGER_MOBILE as managerMobile
+        FROM rm_venues_info ve
+        left join rm_venues_manager_info ma on ve.RESPONSIBLE_PERSON=ma.manager_id
+        where ve.VENUES_STATUS='01'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  ve.RELIGIOUS_SECT  = #{vo.searchOne}
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        order by ve.LAST_MODIFY_TIME desc,ve.VENUES_ID asc
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="getDialogVenueTotal" resultType="java.lang.Long">
+        SELECT
+            count(ve.venues_id)
+        FROM rm_venues_info ve
+        where ve.VENUES_STATUS='01'
+        <if test="vo.searchOne != null and vo.searchOne != ''">
+            AND  ve.RELIGIOUS_SECT  = #{vo.searchOne}
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+
+    </select>
+
+    <select id="getTotal" resultType="java.lang.Long">
+        select count(VENUES_ID)
+        from RM_VENUES_INFO ve
+        left join rm_venues_manager_info fz on fz.MANAGER_ID=ve.RESPONSIBLE_PERSON and fz.MANAGER_TYPE_CD='01' and fz.VALID_IND='1'
+        where VENUES_STATUS!='02'
+        <if test="venue.venuesName != null and venue.venuesName != ''">
+            AND  ve.VENUES_NAME LIKE CONCAT('%',#{venue.venuesName},'%')
+        </if>
+        <if test="venue.responsiblePerson != null and venue.responsiblePerson != ''">
+            AND  fz.MANAGER_CN_NM LIKE CONCAT('%',#{venue.responsiblePerson},'%')
+        </if>
+        <if test="venue.religiousSect != null and venue.religiousSect != ''">
+            AND  ve.RELIGIOUS_SECT = #{venue.religiousSect}
+        </if>
+        <if test="venue.venuesPhone != null and venue.venuesPhone != ''">
+            AND  ve.VENUES_PHONE LIKE CONCAT('%',#{venue.venuesPhone},'%')
+        </if>
+        <if test="venue.town != null and venue.town != ''">
+            AND  ve.TOWN = #{venue.town}
+        </if>
+        <if test="venue.area != null and venue.area != ''">
+            AND  ve.AREA = #{venue.area}
+        </if>
+        <if test="venue.venuesAddres != null and venue.venuesAddres != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="relVenuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getVenuesByPage" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        select
+            ve.VENUES_ID as venuesId ,
+            ve.VENUES_NAME as venuesName,
+            d.DICT_CN_DESC as religiousSect,
+            ve.REGISTER_NBR as registerNbr,
+            ve.VENUES_PHONE as venuesPhone,
+            ve.ORGANIZATION as organization,
+            ve.VENUES_ADDRES as venuesAddres,
+            ve.PICTURES_PATH as picturesPath,
+            fz.MANAGER_CN_NM  as responsiblePerson,
+            ve.LIAISON_MAN as liaisonMan,
+            ve.BRIEF_INTRODUCTION as briefIntroduction,
+            VENUES_STATUS as venuesStatus,
+            ve.CREATOR as creator,
+            ve.CREATE_TIME as createTime,
+            ve.LAST_MODIFIER as lastModifier,
+            ve.LAST_MODIFY_TIME as lastModifyTime,
+            ve.RELIGIOUS_SECT as dictCd,
+            ve.LONGITUDE as longitude,
+            ve.LATITUDE as latitudes
+
+        from RM_VENUES_INFO ve
+        left join RM_SYS_DICT d on ve.RELIGIOUS_SECT=d.DICT_CD
+        left join rm_venues_manager_info fz on fz.MANAGER_ID=ve.RESPONSIBLE_PERSON and fz.MANAGER_TYPE_CD='01' and fz.VALID_IND='1'
+        where VENUES_STATUS!='02'
+        <if test="venue.venuesName != null and venue.venuesName != ''">
+            AND  ve.VENUES_NAME LIKE CONCAT('%',#{venue.venuesName},'%')
+        </if>
+        <if test="venue.responsiblePerson != null and venue.responsiblePerson != ''">
+            AND  fz.MANAGER_CN_NM LIKE CONCAT('%',#{venue.responsiblePerson},'%')
+        </if>
+        <if test="venue.religiousSect != null and venue.religiousSect != ''">
+            AND  ve.RELIGIOUS_SECT = #{venue.religiousSect}
+        </if>
+        <if test="venue.venuesPhone != null and venue.venuesPhone != ''">
+            AND  ve.VENUES_PHONE LIKE CONCAT('%',#{venue.venuesPhone},'%')
+        </if>
+        <if test="venue.town != null and venue.town != ''">
+            AND  ve.TOWN = #{venue.town}
+        </if>
+        <if test="venue.area != null and venue.area != ''">
+            AND  ve.AREA = #{venue.area}
+        </if>
+        <if test="venue.venuesAddres != null and venue.venuesAddres != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="relVenuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        order by ve.LAST_MODIFY_TIME desc
+        limit #{page},#{size}
+    </select>
+
+    <update id="updateLngLat">
+        UPDATE
+            RM_VENUES_INFO
+        set
+            LONGITUDE=#{longitude},
+            LATITUDE= #{Latitude}
+        WHERE VENUES_ID = #{venuesId}
+    </update>
+
+    <select id="getMapVenues" resultType="map">
+        select
+            ve.VENUES_ID as venuesId ,
+            ve.LONGITUDE as longitude,
+            ve.LATITUDE as Latitude,
+            d.DICT_CN_DESC as religiousSectCn,
+            ve.RELIGIOUS_SECT as religiousSect,
+            ve.VENUES_NAME as venuesName
+        from RM_VENUES_INFO ve
+        left join RM_SYS_DICT d on ve.RELIGIOUS_SECT=d.DICT_CD
+        where VENUES_STATUS='01'
+        and ve.LONGITUDE is not null
+        and ve.LATITUDE is not null
+        <if test="vo.searchThree!=null and vo.searchThree!=''">
+            AND  ve.TOWN = #{vo.searchThree}
+        </if>
+        <if test="vo.searchTwo!=null and vo.searchTwo!=''">
+            and ve.RELIGIOUS_SECT in
+            <foreach collection="vo.searchArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        <if test="vo.searchOne!=null and vo.searchOne!=''">
+            and (
+            ve.RESPONSIBLE_PERSON LIKE concat('%',#{vo.searchOne},'%')
+            or ve.VENUES_ADDRES LIKE concat('%',#{vo.searchOne},'%')
+            or ve.VENUES_NAME LIKE concat('%',#{vo.searchOne},'%')
+            or ve.VENUES_ID=#{vo.searchOne}
+            )
+        </if>
+        <if test="vo.town != null and vo.town != ''">
+            AND  ve.TOWN = #{vo.town}
+        </if>
+        <if test="vo.area != null and vo.area != ''">
+            AND  ve.AREA = #{vo.area}
+        </if>
+        <if test="vo.venues != null and vo.venues != ''">
+            and ve.VENUES_ID IN
+            <foreach collection="vo.venuesArr" item="value" separator="," open="(" close=")">
+                #{value}
+            </foreach>
+        </if>
+        order by ve.VENUES_ID desc
+    </select>
+
+    <select id="getVenuesByID" resultType="map">
+        select
+            ve.VENUES_ID as venuesId ,
+            ve.VENUES_NAME as venuesName,
+            ve.RELIGIOUS_SECT as religiousSect,
+            (select di.DICT_CN_DESC from rm_sys_dict di where di.DICT_TYPE_CD='1001' and di.DICT_CD=ve.RELIGIOUS_SECT) as reSectNm,
+            ve.REGISTER_NBR as registerNbr,
+            ve.VENUES_PHONE as venuesPhone,
+            ve.ORGANIZATION as organization,
+            ve.VENUES_ADDRES as venuesAddres,
+            ve.PICTURES_PATH as picturesPath,
+            ve.BRIEF_INTRODUCTION as briefIntroduction,
+            ve.LONGITUDE as longitude,
+            ve.latitude as Latitude,
+            ve.RESPONSIBLE_PERSON  as resId,
+            res.MANAGER_CN_NM as resNm,
+            res.MANAGER_MOBILE as resMo,
+            ve.LIAISON_MAN as liaId,
+            lia.MANAGER_CN_NM as liaNm,
+            lia.MANAGER_MOBILE as liaMo,
+            ve.GROUP_MEMBERS as groId,
+            gro.MANAGER_CN_NM as groNm,
+            gro.MANAGER_MOBILE as groMo,
+            ve.PROVINCE as province,
+            ve.CITY as city,
+            ve.AREA as area,
+            ve.TOWN as  town,
+            ve.VENUES_STAFF as venuesStaff
+        from RM_VENUES_INFO ve
+        left join rm_venues_manager_info res on res.MANAGER_ID=ve.RESPONSIBLE_PERSON and res.MANAGER_TYPE_CD='01'
+        left join rm_venues_manager_info gro on gro.MANAGER_ID=ve.GROUP_MEMBERS and gro.MANAGER_TYPE_CD='02'
+        left join rm_venues_manager_info lia on lia.MANAGER_ID=ve.LIAISON_MAN and lia.MANAGER_TYPE_CD='03'
+        where VENUES_ID=#{venuesId}
+    </select>
+
+    <select id="getFiling" resultType="map">
+        SELECT
+            TASK_NAME as filingNm
+        FROM rm_filing_info
+        where FILING_STATUS='02'
+        <if test="relVenuesId!=null and relVenuesId!=''">
+            and REL_VENUES_ID = #{relVenuesId}
+        </if>
+    </select>
+
+    <select id="getUsers" resultType="map">
+        SELECT
+            IDENTITY as type,
+            USER_NM as name,
+            USER_MOBILE as phone,
+            IDENTITY as identity
+        FROM rm_sys_user_info
+        where VALID_IND='1'
+        and IDENTITY in ('10000007','10000006')
+        <if test="relVenuesId!=null and relVenuesId!=''">
+            and REL_VENUES_ID LIKE CONCAT('%',#{relVenuesId},'%')
+        </if>
+    </select>
+
+    <select id="getGanUsers" resultType="map">
+        select
+            distinct g.IDENTITY as IDENTITY,g.USER_NM,g.USER_MOBILE
+        from rm_sys_user_info  g
+        left join rm_sys_user_info u on g.area=u.area
+        where g.VALID_IND='1'
+        and g.IDENTITY in ('10000002','10000003','10000004','10000005')
+        <if test="relVenuesId!=null and relVenuesId!=''">
+            and u.REL_VENUES_ID = #{relVenuesId}
+        </if>
+        order by g.IDENTITY
+    </select>
+
+    <select id="getStaffs" resultType="map">
+        select
+            s.STAFF_ID as id,
+            s.STAFF_CN_NM as name,
+            s.STAFF_TELPHONE as phone
+        from rm_staff_info s
+        where 1=1
+        <if test="relVenuesId!=null and relVenuesId!=''">
+            and REL_VENUES_ID = #{relVenuesId}
+        </if>
+    </select>
+
+    <select id="getVenuesStaffs" resultType="map">
+        select
+            s.STAFF_ID as id,
+            s.STAFF_CN_NM as name,
+            s.STAFF_TELPHONE as phone
+        from rm_staff_info s
+        where s.STAFF_ID in
+        <foreach collection="venuesStaffArr" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="getVenuesByNm" resultType="map">
+        select
+            VENUES_ID as venuesId
+        from RM_VENUES_INFO
+        where VENUES_STATUS!='02'
+        <if test="venuesName!=null and venuesName!=''">
+            and VENUES_NAME = #{venuesName}
+        </if>
+    </select>
+
+    <select id="queryVenuesJz" resultType="map">
+        select
+            ve.VENUES_ID as venuesId ,
+            ve.VENUES_NAME as venuesName,
+            ve.REGISTER_NBR as registerNbr,
+            ve.PICTURES_PATH as picturesPath,
+            ve.VENUES_PHONE as venuesPhone,
+            ve.ORGANIZATION as organization,
+            ve.VENUES_ADDRES as venuesAddres,
+            ve.BRIEF_INTRODUCTION as briefIntroduction,
+            ve.RELIGIOUS_SECT as religiousSect,
+            d.DICT_CN_DESC as religiousSectCn,
+            m.MANAGER_CN_NM as managerCnNm,
+            m.MANAGER_MOBILE as managerMobile
+        from RM_VENUES_INFO ve
+        left join RM_SYS_DICT d on ve.RELIGIOUS_SECT=d.DICT_CD
+        left join rm_venues_manager_info m on ve.RESPONSIBLE_PERSON=m.MANAGER_ID
+        where m.MANAGER_MOBILE=#{login}
+        <if test="search!=null and search!=''">
+            and ( RESPONSIBLE_PERSON LIKE concat('%',#{search},'%')
+            or VENUES_ADDRES LIKE concat('%',#{search},'%')
+            or VENUES_NAME LIKE concat('%',#{search},'%'))
+        </if>
+    </select>
+
+    <select id="getStaffJz" resultType="java.lang.String">
+        select
+            GROUP_CONCAT(distinct s.STAFF_CN_NM) as names
+        from rm_staff_info s
+        where REL_VENUES_ID = #{relVenuesId}
+    </select>
+
+    <select id="getVenuesScore" resultType="map">
+        SELECT  v.VENUES_NAME as venuesName,
+                FLOOR(rand()*100) as score
+        FROM RM_VENUES_INFO v
+        order by score desc
+        limit 0,#{num}
+    </select>
+
+    <select id="queryOra" resultType="com.religion.zhiyun.venues.entity.VenuesEntity">
+        select
+        v.VENUES_ID as venuesId,CONCAT('瓯海区 ',t.TOWN_NAME) as organization
+        from RM_VENUES_INFO v left join rm_town_info t on v.TOWN=t.TOWN_CODE
+    </select>
+    <update id="updateOra">
+        UPDATE RM_VENUES_INFO set ORGANIZATION=#{organization} WHERE VENUES_ID = #{venuesId}
+    </update>
+
+</mapper>

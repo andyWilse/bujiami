@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.religion.zhiyun.venues.dao.VenuesManagerMapper">
+
+    <sql id="VenuesManagerColumn">
+        MANAGER_ID as managerId,
+        MANAGER_CN_NM as  managerCnNm,
+        MANAGER_EN_NM as  managerEnNm,
+        MANAGER_EMAIL as  managerEmail,
+        MANAGER_MOBILE as managerMobile ,
+        MANAGER_TEL as  managerTel,
+        MANAGER_TYPE_CD as  managerTypeCd,
+        MANAGER_PHOTO_PATH as  managerPhotoPath,
+        VALID_IND as  validInd,
+        PASSWORDS as  passwords,
+        CREATOR as  creator,
+        CREATE_TIME as createTime,
+        LAST_MODIFIER as  lastModifier,
+        LAST_MODIFY_TIME as lastModifyTime,
+        CERT_NBR as certNbr,
+        CERT_TYPE_CD as certTypeCd,
+        RELIGIOUS_TYPE as religiousType,
+        RELIGIOUS_GROUP as religiousGroup,
+        GROUP_POST as   groupPost,
+        VENUES_POST as   venuesPost,
+        BIRTHDAY as   birthday,
+        MAILING_ADDRESS as   mailingAddress,
+        REGISTERED_RESIDENCE as   registeredResidence,
+        POLITICAL as   political,
+        SOCIETY_CULTURE as   societyCulture,
+        SOCIETY_SCHOOL as   societySchool,
+        RELIGIOUS_CULTURE as   religiousCulture,
+        RELIGIOUS_SCHOOL as   religiousSchool,
+        COMPANY as   company,
+        STAFF_POST as   staffPost,
+        POSTTION as   posttion,
+        CERTIFICATE_UNIT as   certificateUnit,
+        CERTIFICATE_TIME as   certificateTime,
+        CERTIFICATE_NUMBER as   certificateNumber
+
+    </sql>
+
+    <insert id="add" keyColumn="fileId" useGeneratedKeys="true" keyProperty="fileId"
+            parameterType="com.religion.zhiyun.venues.entity.VenuesManagerEntity">
+    insert into rm_venues_manager_info(
+        MANAGER_CN_NM,
+        MANAGER_EN_NM,
+        MANAGER_EMAIL,
+        MANAGER_MOBILE,
+        MANAGER_TEL,
+        MANAGER_TYPE_CD,
+        MANAGER_PHOTO_PATH,
+        VALID_IND,
+        PASSWORDS,
+        CREATOR,
+        CREATE_TIME,
+        LAST_MODIFIER,
+        LAST_MODIFY_TIME,
+        CERT_NBR,
+        CERT_TYPE_CD,
+        RELIGIOUS_TYPE,
+        RELIGIOUS_GROUP,
+        GROUP_POST,
+        VENUES_POST,
+        BIRTHDAY,
+        MAILING_ADDRESS,
+        REGISTERED_RESIDENCE,
+        POLITICAL,
+        SOCIETY_CULTURE,
+        SOCIETY_SCHOOL,
+        RELIGIOUS_CULTURE,
+        RELIGIOUS_SCHOOL,
+        COMPANY,
+        STAFF_POST,
+        POSTTION,
+        CERTIFICATE_UNIT,
+        CERTIFICATE_TIME,
+        CERTIFICATE_NUMBER
+    ) values (
+        #{managerCnNm},
+        #{managerEnNm},
+        #{managerEmail},
+        #{managerMobile},
+        #{managerTel},
+        #{managerTypeCd},
+        #{managerPhotoPath},
+        #{validInd},
+        #{passwords},
+        #{creator},
+        #{createTime},
+        #{lastModifier},
+        #{lastModifyTime},
+        #{certNbr},
+        #{certTypeCd},
+        #{religiousType},
+        #{religiousGroup},
+        #{groupPost},
+        #{venuesPost},
+        #{birthday},
+        #{mailingAddress},
+        #{registeredResidence},
+        #{political},
+        #{societyCulture},
+        #{societySchool},
+        #{religiousCulture},
+        #{religiousSchool},
+        #{company},
+        #{staffPost},
+        #{posttion},
+        #{certificateUnit},
+        #{certificateTime},
+        #{certificateNumber}
+    )
+    </insert>
+
+    <update id="update">
+        update RM_VENUES_MANAGER_INFO
+            set
+                MANAGER_CN_NM=#{managerCnNm},
+                MANAGER_EN_NM=#{managerEnNm},
+                CERT_NBR=#{certNbr},
+                CERT_TYPE_CD=#{certTypeCd},
+                MANAGER_TYPE_CD=#{managerTypeCd},
+                MANAGER_EMAIL=#{managerEmail},
+                MANAGER_MOBILE=#{managerMobile},
+                MANAGER_PHOTO_PATH=#{managerPhotoPath},
+                PASSWORDS=#{passwords},
+                LAST_MODIFIER=#{lastModifier},
+                LAST_MODIFY_TIME=#{lastModifyTime}
+        where MANAGER_ID=#{managerId}
+    </update>
+
+    <update id="delete" >
+        update RM_VENUES_MANAGER_INFO
+        set VALID_IND='0' ,LAST_MODIFIER=#{lastModifier}, LAST_MODIFY_TIME=#{lastModifyTime}
+        where MANAGER_ID = #{managerId}
+    </update>
+
+    <select id="query" resultType="com.religion.zhiyun.venues.entity.VenuesManagerEntity">
+        select
+            <include refid="VenuesManagerColumn"/>
+        from RM_VENUES_MANAGER_INFO
+    </select>
+
+    <select id="getManagerByNm" resultType="map">
+        select
+            MANAGER_ID as managerId,
+            MANAGER_CN_NM as  managerCnNm
+        from RM_VENUES_MANAGER_INFO
+        where VALID_IND='1'
+        <if test="name!=null and name!=''">
+            and ( MANAGER_CN_NM = #{name} or MANAGER_MOBILE = #{name} )
+        </if>
+    </select>
+
+    <select id="getManagerById" resultType="string">
+        select
+            MANAGER_CN_NM as  managerCnNm
+        from RM_VENUES_MANAGER_INFO
+        <if test="managerId!=null and managerId!=''">
+            where  MANAGER_ID = #{managerId}
+        </if>
+    </select>
+
+    <select id="findManager" resultType="map">
+        select
+            MANAGER_ID as managerId,
+            MANAGER_CN_NM as  managerCnNm,
+            (select DICT_CN_DESC from  rm_sys_dict where DICT_TYPE_CD='1006' and VALID_IND='1' and DICT_CD=MANAGER_TYPE_CD) as  managerTypeCd,
+
+            MANAGER_MOBILE as managerMobile,
+            MANAGER_TYPE_CD as typeCd
+        from RM_VENUES_MANAGER_INFO ma
+        where VALID_IND='1'
+        <if test="vo.searchOne!=null and vo.searchOne!=''">
+            and   MANAGER_CN_NM LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.searchTwo!=null and vo.searchTwo!=''">
+            and   MANAGER_MOBILE LIKE CONCAT('%',#{vo.searchTwo},'%')
+        </if>
+        order by ma.LAST_MODIFY_TIME desc
+        limit #{vo.page},#{vo.size}
+    </select>
+
+    <select id="findManagerTotal" resultType="long">
+        select
+            count(MANAGER_ID)
+        from RM_VENUES_MANAGER_INFO ma
+        where VALID_IND='1'
+        <if test="vo.searchOne!=null and vo.searchOne!=''">
+            and   MANAGER_CN_NM LIKE CONCAT('%',#{vo.searchOne},'%')
+        </if>
+        <if test="vo.searchTwo!=null and vo.searchTwo!=''">
+            and   MANAGER_MOBILE LIKE CONCAT('%',#{vo.searchTwo},'%')
+        </if>
+    </select>
+
+    <select id="getByManagerId" resultType="com.religion.zhiyun.venues.entity.VenuesManagerEntity">
+        select
+             <include refid="VenuesManagerColumn"/>
+        from RM_VENUES_MANAGER_INFO ma
+        where ma.MANAGER_ID=#{managerId}
+    </select>
+
+    <update id="updatePass" >
+        update RM_VENUES_MANAGER_INFO
+        set PASSWORDS=#{passwors}
+        where MANAGER_ID = #{managerId}
+    </update>
+</mapper>
