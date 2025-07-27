@@ -138,6 +138,9 @@ public class RmEventInfoServiceImpl implements RmEventInfoService {
             }else if(content.contains("未成年")){//未成年检测
                 eventType=ParamCode.EVENT_TYPE_03.getCode();
                 cont=ParamCode.EVENT_TYPE_03.getMessage();
+            }else if(content.contains("画面异常")){//画面异常
+                eventType=ParamCode.EVENT_TYPE_06.getCode();
+                cont=ParamCode.EVENT_TYPE_06.getMessage();
             }else{
                 eventType="0";
             }
@@ -193,7 +196,13 @@ public class RmEventInfoServiceImpl implements RmEventInfoService {
                 venuesAddres = venues.getVenuesAddres();
                 venuesName = venues.getVenuesName();
             }
-            String contents="【智云科技】您好！位于"+venuesAddres+"的"+venuesName+",触发“"+cont+"”预警，请您立刻前去处理！！";
+            //短信模板
+            String contents="【智云科技】您好！位于"+venuesAddres+"的"+venuesName+",触发“"+cont+"”预警，请您立刻前去处理！";
+            if(ParamCode.EVENT_TYPE_04.getCode().equals(eventType)){
+                contents="【智云科技】您好！位于"+venuesAddres+"的"+venuesName+",发现“集聚”活动，请您前往现场核实活动内容！";
+            }else if(ParamCode.EVENT_TYPE_06.getCode().equals(eventType)) {
+                contents = "【智云科技】您好！位于" + venuesAddres + "的" + venuesName + ",发现摄像头“画面异常”，疑似摄像头被移动位置或遮挡，请您立即前往现场核实！";
+            }
             HashMap<String,Object> mapCall=new HashMap<>();
             mapCall.put("eventType",eventType);
             mapCall.put("relVenuesId",relVenuesId);
